@@ -296,7 +296,8 @@
     if(weapon==='scatter')return state.level>=3&&state.diamonds>=2;
     if(weapon==='water')return state.level>=5&&state.diamonds>=4;
     if(weapon==='burrow')return state.level>=7&&state.diamonds>=3;
-    if(weapon==='tracker')return state.level>=9&&state.diamonds>=4;\n    if(weapon==='nuclear')return state.level>=6&&state.diamonds>=8&&state.enemies.length>0;
+    if(weapon==='tracker')return state.level>=9&&state.diamonds>=4;
+    if(weapon==='nuclear')return state.level>=6&&state.diamonds>=8&&state.enemies.length>0;
     return false;
   }
 
@@ -331,7 +332,10 @@
 
   function chooseWeapon(weapon) {
     if(state.locked||!weaponAvailable(weapon))return;
-    if(weapon==='nuclear') {\n      const targets=[...state.enemies]; state.diamonds-=8; battleMessage('☢️ 全屏核弹发射！原子爆炸倒计时……'); playAttackEffect('nuclear',targets.map(e=>e.id),()=>{ let bossHit=false; targets.forEach(e=>{if(!state.enemies.some(x=>x.id===e.id))return; if(e.kind==='boss'){e.nukeHits=(e.nukeHits||0)+1; bossHit=true; if(e.nukeHits>=2){state.enemies=state.enemies.filter(x=>x.id!==e.id);}else{e.hp=1; battleMessage('核爆命中 Boss！它还剩最后一击，至少需要第二枚核弹！');}}else state.enemies=state.enemies.filter(x=>x.id!==e.id);}); if(!bossHit)battleMessage('核爆席卷全场！所有怪兽已消灭！'); finishAttack(900);}); return;\n    }\n    if(weapon==='scatter') {
+    if(weapon==='nuclear') {
+      const targets=[...state.enemies]; state.diamonds-=8; battleMessage('☢️ 全屏核弹发射！原子爆炸倒计时……'); playAttackEffect('nuclear',targets.map(e=>e.id),()=>{ let bossHit=false; targets.forEach(e=>{if(!state.enemies.some(x=>x.id===e.id))return; if(e.kind==='boss'){e.nukeHits=(e.nukeHits||0)+1; bossHit=true; if(e.nukeHits>=2){state.enemies=state.enemies.filter(x=>x.id!==e.id);}else{e.hp=1; battleMessage('核爆命中 Boss！它还剩最后一击，至少需要第二枚核弹！');}}else state.enemies=state.enemies.filter(x=>x.id!==e.id);}); if(!bossHit)battleMessage('核爆席卷全场！所有怪兽已消灭！'); finishAttack(900);}); return;
+    }
+    if(weapon==='scatter') {
       const targets=state.enemies.filter(e=>e.lane==='air').slice(0,3);
       if(!targets.length){battleMessage('空中没有可攻击的目标。');return;}
       battleMessage('空中散射弹升空，锁定多个目标！');
@@ -485,15 +489,39 @@
   function loadMistakeSessions(){try{const value=JSON.parse(localStorage.getItem(mistakeStorageKey())||'[]');return Array.isArray(value)?value:[];}catch{return[];}}
   function mistakeReason(reason){return{victory:'通关',defeat:'生命耗尽',surrender:'主动投降'}[reason]||'本次结束';}
   function collectMistakeSession(reason){if(state.reportSession)return{session:state.reportSession,sessions:loadMistakeSessions()};const session={id:`${Date.now()}-${Math.random().toString(16).slice(2)}`,date:new Date().toISOString(),player:state.player,mode:state.mode,reason,reasonLabel:mistakeReason(reason),level:state.level,turns:state.totalTurns,answered:state.answered,correct:state.correct,mistakes:state.wrongAnswers.map(item=>({...item}))};const sessions=[...loadMistakeSessions(),session];localStorage.setItem(mistakeStorageKey(state.mode),JSON.stringify(sessions));state.reportSession=session;state.reportGenerated=true;return{session,sessions};}
-  function mdSafe(value){return String(value??'').replace(/\\/g,'\\\\').replace(/\\|/g,'\\|').replace(/\r?\n/g,' ');}
-  function buildMistakeMarkdown(sessions){const total=sessions.reduce((sum,s)=>sum+(s.mistakes?.length||0),0),lines=['# 四域守护战错题集','',`> 最后更新：${new Date().toLocaleString('zh-CN')}`,`> 累计游戏次数：${sessions.length} 次　累计错题：${total} 道`,'','---',''];sessions.forEach((session,index)=>{lines.push(`## ${index+1}. ${mdSafe(session.date)} · ${session.mode==='math'?'数学':'英语'} · ${mdSafe(session.player)}`);lines.push(`- 结束方式：${mdSafe(session.reasonLabel)}；结束关卡：第${session.level}关；回合：${session.turns}；正确率：${session.answered?Math.round(session.correct/session.answered*100):0}%`);if(!session.mistakes?.length){lines.push('- 本次没有答错题。','');return;}session.mistakes.forEach((item,itemIndex)=>{lines.push(`### 错题 ${itemIndex+1} · 第${item.level}关 · ${mdSafe(item.topic)}`,'',`- 题目：${mdSafe(item.prompt)}`,`- 我的答案：**${mdSafe(item.selected)}**`,`- 正确答案：**${mdSafe(item.answer)}**`,`- 解析：${mdSafe(item.explanation)}`,`- 提示：${mdSafe(item.hint)}`,'');});});return lines.join('\n');}
+  function mdSafe(value){return String(value??'').replace(/\\/g,'\\\\').replace(/\\|/g,'\\|').replace(/\r?
+/g,' ');}
+  function buildMistakeMarkdown(sessions){const total=sessions.reduce((sum,s)=>sum+(s.mistakes?.length||0),0),lines=['# 四域守护战错题集','',`> 最后更新：${new Date().toLocaleString('zh-CN')}`,`> 累计游戏次数：${sessions.length} 次　累计错题：${total} 道`,'','---',''];sessions.forEach((session,index)=>{lines.push(`## ${index+1}. ${mdSafe(session.date)} · ${session.mode==='math'?'数学':'英语'} · ${mdSafe(session.player)}`);lines.push(`- 结束方式：${mdSafe(session.reasonLabel)}；结束关卡：第${session.level}关；回合：${session.turns}；正确率：${session.answered?Math.round(session.correct/session.answered*100):0}%`);if(!session.mistakes?.length){lines.push('- 本次没有答错题。','');return;}session.mistakes.forEach((item,itemIndex)=>{lines.push(`### 错题 ${itemIndex+1} · 第${item.level}关 · ${mdSafe(item.topic)}`,'',`- 题目：${mdSafe(item.prompt)}`,`- 我的答案：**${mdSafe(item.selected)}**`,`- 正确答案：**${mdSafe(item.answer)}**`,`- 解析：${mdSafe(item.explanation)}`,`- 提示：${mdSafe(item.hint)}`,'');});});return lines.join('
+');}
   function downloadBlob(blob,name){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
   async function writeBoundFile(name,data,type){if(!reportFolderHandle)return false;try{const permission=await reportFolderHandle.queryPermission({mode:'readwrite'});if(permission!=='granted')return false;const file=await reportFolderHandle.getFileHandle(name,{create:true}),writer=await file.createWritable();await writer.write(type?new Blob([data],{type}):data);await writer.close();return true;}catch{return false;}}
-  function wrapCanvas(ctx,text,maxWidth){const lines=[];String(text).split('\n').forEach(part=>{let line='';for(const ch of [...part]){const test=line+ch;if(line&&ctx.measureText(test).width>maxWidth){lines.push(line);line=ch;}else line=test;}lines.push(line||' ');});return lines;}
+  function wrapCanvas(ctx,text,maxWidth){const lines=[];String(text).split('
+').forEach(part=>{let line='';for(const ch of [...part]){const test=line+ch;if(line&&ctx.measureText(test).width>maxWidth){lines.push(line);line=ch;}else line=test;}lines.push(line||' ');});return lines;}
   function makeReportCanvases(session){const pages=[];let canvas,ctx,y;const newPage=()=>{canvas=document.createElement('canvas');canvas.width=1240;canvas.height=1754;ctx=canvas.getContext('2d');ctx.fillStyle='#fffdf6';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#173b57';ctx.fillRect(0,0,canvas.width,25);y=85;pages.push(canvas);};const write=(text,size=28,bold=false,color='#243b53',gap=13)=>{ctx.font=`${bold?'700':'400'} ${size}px "Microsoft YaHei", "PingFang SC", sans-serif`;ctx.fillStyle=color;const lines=wrapCanvas(ctx,text,1080);const lineHeight=Math.round(size*1.52);if(y+lines.length*lineHeight>1630)newPage();for(const line of lines){ctx.fillText(line,80,y);y+=lineHeight;}y+=gap;};newPage();write('四域守护战 · 当次错题报告',42,true,'#173b57',18);write(`守护者：${session.player}　科目：${session.mode==='math'?'数学':'英语'}`,25,true,'#2584c4',5);write(`结束方式：${session.reasonLabel}　结束日期：${new Date(session.date).toLocaleString('zh-CN')}`,23,false,'#526d7e',8);write(`第${session.level}关　总回合 ${session.turns}　正确率 ${session.answered?Math.round(session.correct/session.answered*100):0}%　错题 ${session.mistakes?.length||0} 道`,25,true,'#a04427',20);if(!session.mistakes?.length){write('本次没有答错题，继续保持！',34,true,'#258451',30);}else session.mistakes.forEach((item,index)=>{write(`错题 ${index+1} · 第${item.level}关 · ${item.topic}`,29,true,'#173b57',4);write(`题目：${item.prompt}`,25,false,'#243b53',2);write(`我的答案：${item.selected}`,24,false,'#b04444',2);write(`正确答案：${item.answer}`,24,true,'#23804e',2);write(`解析：${item.explanation}`,22,false,'#526d7e',2);write(`提示：${item.hint}`,21,false,'#855b00',14);});pages.forEach((page,index)=>{const pageCtx=page.getContext('2d');pageCtx.font='20px "Microsoft YaHei", sans-serif';pageCtx.fillStyle='#8293a2';pageCtx.fillText(`四域守护战　${index+1} / ${pages.length}`,80,1695);});return pages;}
   function textBytes(value){return new TextEncoder().encode(value);}
   function concatBytes(parts){const length=parts.reduce((sum,part)=>sum+part.length,0),result=new Uint8Array(length);let offset=0;parts.forEach(part=>{result.set(part,offset);offset+=part.length;});return result;}
-  async function makePdfBlob(canvases){const images=[];for(const canvas of canvases){const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('canvas export failed')),'image/jpeg',.9));images.push(new Uint8Array(await blob.arrayBuffer()));}const objects=[null,textBytes('<< /Type /Catalog /Pages 2 0 R >>')];const pageIds=canvases.map((_,i)=>3+i*3);objects.push(textBytes(`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`));canvases.forEach((_,i)=>{const pageId=3+i*3,imageId=4+i*3,contentId=5+i*3;objects[pageId]=textBytes(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>`);objects[imageId]=concatBytes([textBytes(`<< /Type /XObject /Subtype /Image /Width 1240 /Height 1754 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${images[i].length} >>\nstream\n`),images[i],textBytes('\nendstream')]);const content='q\n595 0 0 842 0 0 cm\n/Im0 Do\nQ\n';objects[contentId]=concatBytes([textBytes(`<< /Length ${textBytes(content).length} >>\nstream\n`),textBytes(content),textBytes('endstream')]);});const chunks=[textBytes('%PDF-1.4\n')],offsets=new Array(objects.length).fill(0);let total=chunks[0].length;for(let id=1;id<objects.length;id++){const prefix=textBytes(`${id} 0 obj\n`),suffix=textBytes('\nendobj\n');offsets[id]=total;chunks.push(prefix,objects[id],suffix);total+=prefix.length+objects[id].length+suffix.length;}const xrefOffset=total;let xref=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;for(let id=1;id<objects.length;id++)xref+=`${String(offsets[id]).padStart(10,'0')} 00000 n \n`;xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;chunks.push(textBytes(xref));return new Blob(chunks,{type:'application/pdf'});}
+  async function makePdfBlob(canvases){const images=[];for(const canvas of canvases){const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('canvas export failed')),'image/jpeg',.9));images.push(new Uint8Array(await blob.arrayBuffer()));}const objects=[null,textBytes('<< /Type /Catalog /Pages 2 0 R >>')];const pageIds=canvases.map((_,i)=>3+i*3);objects.push(textBytes(`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`));canvases.forEach((_,i)=>{const pageId=3+i*3,imageId=4+i*3,contentId=5+i*3;objects[pageId]=textBytes(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>`);objects[imageId]=concatBytes([textBytes(`<< /Type /XObject /Subtype /Image /Width 1240 /Height 1754 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${images[i].length} >>
+stream
+`),images[i],textBytes('
+endstream')]);const content='q
+595 0 0 842 0 0 cm
+/Im0 Do
+Q
+';objects[contentId]=concatBytes([textBytes(`<< /Length ${textBytes(content).length} >>
+stream
+`),textBytes(content),textBytes('endstream')]);});const chunks=[textBytes('%PDF-1.4
+')],offsets=new Array(objects.length).fill(0);let total=chunks[0].length;for(let id=1;id<objects.length;id++){const prefix=textBytes(`${id} 0 obj
+`),suffix=textBytes('
+endobj
+');offsets[id]=total;chunks.push(prefix,objects[id],suffix);total+=prefix.length+objects[id].length+suffix.length;}const xrefOffset=total;let xref=`xref
+0 ${objects.length}
+0000000000 65535 f 
+`;for(let id=1;id<objects.length;id++)xref+=`${String(offsets[id]).padStart(10,'0')} 00000 n 
+`;xref+=`trailer
+<< /Size ${objects.length} /Root 1 0 R >>
+startxref
+${xrefOffset}
+%%EOF`;chunks.push(textBytes(xref));return new Blob(chunks,{type:'application/pdf'});}
   async function generateAndSaveReports(){const collected=collectMistakeSession(state.finishReason||'defeat'),session=collected.session,sessions=collected.sessions;reportStatus('正在生成错题集与当次 PDF……');const markdown=buildMistakeMarkdown(sessions),pdf=await makePdfBlob(makeReportCanvases(session)),date=new Date(session.date).toISOString().replace(/[:.]/g,'-'),subject=session.mode==='math'?'数学':'英语',pdfName=`${date}_${subject}_当次错题报告.pdf`;const mdSaved=await writeBoundFile(`${subject}错题集.md`,markdown,'text/markdown;charset=utf-8'),pdfSaved=await writeBoundFile(pdfName,pdf,'application/pdf');if(!mdSaved)downloadBlob(new Blob([markdown],{type:'text/markdown;charset=utf-8'}),`${subject}错题集.md`);if(!pdfSaved)downloadBlob(pdf,pdfName);if(mdSaved&&pdfSaved){reportStatus(`${subject}错题集.md + ${pdfName}`,'success');}else{reportStatus(`已下载：${subject}错题集.md + ${pdfName}`,'warning');}}
   function finishGame(won,reason) {
     if(state.finished)return;
@@ -552,6 +580,7 @@
 
   if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();
+
 
 
 
