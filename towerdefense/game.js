@@ -296,12 +296,12 @@
     if(weapon==='scatter')return state.level>=3&&state.diamonds>=2;
     if(weapon==='water')return state.level>=5&&state.diamonds>=4;
     if(weapon==='burrow')return state.level>=7&&state.diamonds>=3;
-    if(weapon==='tracker')return state.level>=9&&state.diamonds>=4;
+    if(weapon==='tracker')return state.level>=9&&state.diamonds>=4;\n    if(weapon==='nuclear')return state.level>=6&&state.diamonds>=8&&state.enemies.length>0;
     return false;
   }
 
   function updateWeapons() {
-    const unlock={normal:1,scatter:3,water:5,burrow:7,tracker:9};
+    const unlock={normal:1,scatter:3,water:5,burrow:7,tracker:9,nuclear:6};
     $$('.ammo-button[data-weapon]').forEach((button)=>{
       const w=button.dataset.weapon; button.disabled=state.locked||!weaponAvailable(w); button.classList.toggle('selected',state.selectedWeapon===w);
       button.title=state.level<unlock[w]?`第${unlock[w]}关解锁`:'';
@@ -312,7 +312,7 @@
   function playAttackEffect(weapon,targetIds,onImpact) {
     const targetEls=targetIds.map(id=>$(`.enemy[data-enemy-id="${id}"]`)).filter(Boolean); if(!targetEls.length){onImpact();return;}
     state.locked=true; state.selectedWeapon=null; updateWeapons(); markTargets();
-    const settings={normal:{icon:'🔥',impact:'💥',duration:480},scatter:{icon:'✦',impact:'✨',duration:560},water:{icon:'⚓',impact:'🌊',duration:760},burrow:{icon:'🧨',impact:'💥',duration:820},tracker:{icon:'🎯',impact:'⚡',duration:800}}[weapon];
+    const settings={normal:{icon:'🔥',impact:'💥',duration:480},scatter:{icon:'✦',impact:'✨',duration:560},water:{icon:'⚓',impact:'🌊',duration:760},burrow:{icon:'🧨',impact:'💥',duration:820},tracker:{icon:'🎯',impact:'⚡',duration:800},nuclear:{icon:'☢️',impact:'☢️',duration:1100}}[weapon];
     let remaining=targetEls.length;
     targetEls.forEach((target,index)=>{
       const lane=target.closest('.lane'),origin=lane.querySelector('.castle').getBoundingClientRect(),end=target.getBoundingClientRect();
@@ -331,14 +331,14 @@
 
   function chooseWeapon(weapon) {
     if(state.locked||!weaponAvailable(weapon))return;
-    if(weapon==='scatter') {
+    if(weapon==='nuclear') {\n      const targets=[...state.enemies]; state.diamonds-=8; battleMessage('☢️ 全屏核弹发射！原子爆炸倒计时……'); playAttackEffect('nuclear',targets.map(e=>e.id),()=>{ let bossHit=false; targets.forEach(e=>{if(!state.enemies.some(x=>x.id===e.id))return; if(e.kind==='boss'){e.nukeHits=(e.nukeHits||0)+1; bossHit=true; if(e.nukeHits>=2){state.enemies=state.enemies.filter(x=>x.id!==e.id);}else{e.hp=1; battleMessage('核爆命中 Boss！它还剩最后一击，至少需要第二枚核弹！');}}else state.enemies=state.enemies.filter(x=>x.id!==e.id);}); if(!bossHit)battleMessage('核爆席卷全场！所有怪兽已消灭！'); finishAttack(900);}); return;\n    }\n    if(weapon==='scatter') {
       const targets=state.enemies.filter(e=>e.lane==='air').slice(0,3);
       if(!targets.length){battleMessage('空中没有可攻击的目标。');return;}
       battleMessage('空中散射弹升空，锁定多个目标！');
       playAttackEffect('scatter',targets.map(e=>e.id),()=>{state.diamonds-=2;targets.forEach(e=>damageEnemy(e,2,true));battleMessage(`散射弹同时命中 ${targets.length} 个空中目标！`);finishAttack(520);}); return;
     }
     state.selectedWeapon=weapon; updateWeapons(); markTargets();
-    const labels={normal:'普通弹',water:'深水必杀弹',burrow:'钻地必杀弹',tracker:'跨域追踪弹'};
+    const labels={normal:'普通弹',water:'深水必杀弹',burrow:'钻地必杀弹',tracker:'跨域追踪弹',nuclear:'全屏核弹'};
     if(state.enemies.length===1){
       const onlyEnemy=state.enemies[0];
       if(validTarget(onlyEnemy,weapon)){battleMessage(`场上只有${onlyEnemy.name}，${labels[weapon]}自动锁定！`);attackTarget(onlyEnemy.id);return;}
@@ -552,6 +552,7 @@
 
   if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();
+
 
 
 
