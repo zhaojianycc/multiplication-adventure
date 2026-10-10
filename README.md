@@ -10,3 +10,7 @@
 - [英语错题集](mistake-sets/english/错题集.md)
 
 部署后网址：`https://zhaojianycc.github.io/learning-games/`。
+
+- [错题类型维护表](错题类型.md)
+- [数感训练素材库](数感训练.md)
+
